@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 )
 
 type Node struct {
@@ -77,24 +79,68 @@ func BuildTree() *Node {
 	return root
 }
 
-func (node *Node) balance() *Node {
-	if node.right.b == 1 {
-		newRoot := node.right
-		temp := node.right.left
-		newRoot.left = node
-		node.right = temp
+func (node *Node) balance() *Node { //TODO this is ony for right side
+	switch node.right.b {
+	case 1:
 
-		newRoot.b = 0 //TODO this is not correct
-		node.b = 0
-
-		return newRoot
-	} else if node.right.b == -1 {
-
-	} else {
-		node.b--
+	case -1:
+		node.right = node.right.switchBalance()
+	default:
+		//node.b--
 		return node
 	}
-	return nil
+	newRoot := node.right
+	temp := node.right.left
+	newRoot.left = node
+	node.right = temp
+
+	newRoot.b = 0 //TODO this is not correct
+	node.b = 0
+
+	return newRoot
+}
+
+func (node *Node) balanceLeft() *Node { //TODO this is ony for right side
+	switch node.left.b {
+	case -1:
+
+	case 1:
+		node.left = node.left.switchBalanceLeft()
+	default:
+		//node.b--
+		return node
+	}
+	newRoot := node.left
+	temp := node.left.right
+	newRoot.right = node
+	node.left = temp
+
+	newRoot.b = 0 //TODO this is not correct
+	node.b = 0
+
+	return newRoot
+}
+
+func (node *Node) switchBalance() *Node { //TODO this is only for -1
+	newRoot := node.left
+	temp := newRoot.right
+	newRoot.right = node
+	node.left = temp
+
+	newRoot.b++
+	node.b++
+	return newRoot
+}
+
+func (node *Node) switchBalanceLeft() *Node { //TODO this is only for -1
+	newRoot := node.right
+	temp := newRoot.left
+	newRoot.left = node
+	node.right = temp
+
+	newRoot.b--
+	node.b--
+	return newRoot
 }
 
 func (node *Node) add(val int) (int, bool) { //TODO return b
@@ -108,11 +154,18 @@ func (node *Node) add(val int) (int, bool) { //TODO return b
 		if valid {
 			return node.b, true
 		}
-		if b >= 2 {
+		if b <= -2 {
+			node.left = node.left.balanceLeft()
+			return node.b, true
+		} else if b >= 2 {
 			node.left = node.left.balance()
 			return node.b, true
-		} //-2
+		}
+		if b == 0 {
+			return node.b, true
+		}
 		node.b--
+
 	} else {
 		if node.right == nil {
 			node.right = &Node{value: val}
@@ -123,8 +176,14 @@ func (node *Node) add(val int) (int, bool) { //TODO return b
 		if valid {
 			return node.b, true
 		}
-		if b >= 2 { //-2
+		if b >= 2 {
 			node.right = node.right.balance()
+			return node.b, true
+		} else if b <= -2 {
+			node.right = node.right.balanceLeft()
+			return node.b, true
+		}
+		if b == 0 {
 			return node.b, true
 		}
 		node.b++
@@ -145,20 +204,34 @@ func (tree *BalancedTree) Add(val int) {
 	b, _ := node.add(val)
 	if b >= 2 {
 		tree.root = node.balance()
+	} else if b <= -2 {
+		tree.root = node.balanceLeft()
 	}
+	tree.Validate()
 }
 
 func main() {
 	var tree BalancedTree
 
-	for i := range 10 {
-		tree.Add(i)
-	}
+	rand.Seed(time.Now().UnixNano())
 
-	tree.Print()
-	if !tree.Validate() {
-		fmt.Println("All good")
+	n := 10
+	nums := make([]int, n)
+
+	// for i := 0; i < n; i++ {
+	// 	nums[i] = rand.Intn(100)
+	// }
+	nums = []int{78, 85, 17, 76, 55, 64} //, 70, 85, 29, 85
+	fmt.Println(nums)
+	fmt.Println()
+
+	for _, val := range nums {
+		if val == 64 {
+			fmt.Println("start")
+		}
+		tree.Add(val)
 	}
+	tree.Print()
 
 	// tree.root = BuildTree()
 	// tree.Print()
