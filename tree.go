@@ -43,7 +43,7 @@ func (n *Node) validate() (int, bool) {
 		} else if l-r > 1 || r-l > 1 {
 			fmt.Printf("[ERROR] Height mismatch at node %d\n", n.value)
 			return -1, true
-		} else if n.left != nil && n.left.value >= n.value {
+		} else if n.left != nil && n.left.value > n.value {
 			fmt.Printf("[ERROR] Left is greater than current at node %d\n", n.value)
 			return -1, true
 		} else if n.right != nil && n.right.value < n.value {
@@ -79,71 +79,94 @@ func BuildTree() *Node {
 	return root
 }
 
-func (node *Node) balance() *Node { //TODO this is ony for right side
+func (node *Node) balance() *Node {
 	switch node.right.b {
 	case 1:
+		newRoot := node.right
+		temp := node.right.left
+		newRoot.left = node
+		node.right = temp
 
+		newRoot.b = 0
+		node.b = 0
+		return newRoot
 	case -1:
-		node.right = node.right.switchBalance()
+		newRoot := node.right.left
+
+		right := newRoot.right
+		left := newRoot.left
+
+		newRoot.right = node.right
+		newRoot.right.left = right
+
+		newRoot.left = node
+		newRoot.left.right = left
+
+		if newRoot.b == 0 {
+			newRoot.left.b = 0
+			newRoot.right.b = 0
+		} else if newRoot.b == 1 {
+			newRoot.left.b = -1
+			newRoot.right.b = 0
+		} else if newRoot.b == -1 {
+			newRoot.left.b = 0
+			newRoot.right.b = 1
+		}
+
+		newRoot.b = 0
+
+		return newRoot
 	default:
-		//node.b--
 		return node
 	}
-	newRoot := node.right
-	temp := node.right.left
-	newRoot.left = node
-	node.right = temp
-
-	newRoot.b = 0 //TODO this is not correct
-	node.b = 0
-
-	return newRoot
 }
 
-func (node *Node) balanceLeft() *Node { //TODO this is ony for right side
+func (node *Node) balanceLeft() *Node {
 	switch node.left.b {
 	case -1:
+		newRoot := node.left
+		temp := node.left.right
+		newRoot.right = node
+		node.left = temp
 
+		newRoot.b = 0
+		node.b = 0
+
+		return newRoot
 	case 1:
-		node.left = node.left.switchBalanceLeft()
+		newRoot := node.left.right
+
+		right := newRoot.right
+		left := newRoot.left
+
+		newRoot.left = node.left
+		newRoot.left.right = left
+
+		newRoot.right = node
+		newRoot.right.left = right
+
+		if newRoot.b == 0 {
+			newRoot.left.b = 0
+			newRoot.right.b = 0
+		} else if newRoot.b == 1 {
+			newRoot.left.b = -1
+			newRoot.right.b = 0
+		} else if newRoot.b == -1 {
+			newRoot.left.b = 0
+			newRoot.right.b = 1
+		}
+
+		newRoot.b = 0
+
+		return newRoot
 	default:
 		//node.b--
 		return node
 	}
-	newRoot := node.left
-	temp := node.left.right
-	newRoot.right = node
-	node.left = temp
 
-	newRoot.b = 0 //TODO this is not correct
-	node.b = 0
-
-	return newRoot
 }
 
-func (node *Node) switchBalance() *Node { //TODO this is only for -1
-	newRoot := node.left
-	temp := newRoot.right
-	newRoot.right = node
-	node.left = temp
-
-	newRoot.b++
-	node.b++
-	return newRoot
-}
-
-func (node *Node) switchBalanceLeft() *Node { //TODO this is only for -1
-	newRoot := node.right
-	temp := newRoot.left
-	newRoot.left = node
-	node.right = temp
-
-	newRoot.b--
-	node.b--
-	return newRoot
-}
-
-func (node *Node) add(val int) (int, bool) { //TODO return b
+func (node *Node) add(val int) (int, bool) {
 	if val < node.value {
 		if node.left == nil {
 			node.left = &Node{value: val}
@@ -215,28 +238,21 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	n := 10
+	n := 10000
 	nums := make([]int, n)
 
-	// for i := 0; i < n; i++ {
-	// 	nums[i] = rand.Intn(100)
-	// }
-	nums = []int{78, 85, 17, 76, 55, 64} //, 70, 85, 29, 85
-	fmt.Println(nums)
+	for i := 0; i < n; i++ {
+		nums[i] = rand.Intn(100)
+	}
+
+	//fmt.Println(nums)
 	fmt.Println()
 
-	for _, val := range nums {
-		if val == 64 {
+	for i, val := range nums {
+		if i == len(nums)-1 {
 			fmt.Println("start")
 		}
 		tree.Add(val)
 	}
-	tree.Print()
-
-	// tree.root = BuildTree()
-	// tree.Print()
-	// if !tree.Validate() {
-	// 	fmt.Println("All good")
-	// }
-
+	//tree.Print()
 }
